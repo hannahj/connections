@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connections Helper</title>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .game-container {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+        }
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            width: 300px;
+            margin-bottom: 20px;
+        }
+        .tile, .colored-tile {
+            aspect-ratio: 1 / 1;
+            background-color: #f0f0f0; /* Lighter background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: move;
+            text-align: center;
+            overflow: hidden;
+            border: none; /* No borders */
+            border-radius: 12px; /* Rounded corners */
+        }
+        .colored-tile {
+            background-color: #e0e0e0; /* Lighter colored tiles */
+        }
+        .yellow { background-color: #fff9c4; } /* Lighter yellow */
+        .green { background-color: #c8e6c9; } /* Lighter green */
+        .blue { background-color: #bbdefb; } /* Lighter blue */
+        .purple { background-color: #e1bee7; } /* Lighter purple */
+        .tile-content {
+            pointer-events: none;
+            font-weight: bold; /* Bold text */
+            font-size: 12px; /* Scaled down text size */
+            line-height: 1.2; /* Adjust line height for better scaling */
+        }
+    </style>
+</head>
+<body>
+    <h1>Connections Helper</h1>
+    <p>Try out groupings by dragging words into the coloured rows and between them.</p>
+    
+    <div class="game-container">
+        <div id="word-board" class="game-board"></div>
+        <div id="color-board" class="game-board"></div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
+
+    <script>
+        $(function() {
+            const wordBoard = $('#word-board');
+            const colorBoard = $('#color-board');
+            const colors = ['yellow', 'green', 'blue', 'purple'];
+
+            // Function to make tiles draggable
+            function makeTilesDraggable() {
+                $('.tile, .colored-tile').draggable({
+                    revert: 'invalid',
+                    cursor: 'move',
+                    helper: 'clone',
+                    start: function(event, ui) {
+                        $(this).css('opacity', 0.5);  // Make dragged tile semi-transparent
+                    },
+                    stop: function(event, ui) {
+                        $(this).css('opacity', 1);    // Restore opacity
+                    }
+                });
+            }
+
+            // Fetch words from the JSON file
+            $.getJSON('words.json', function(words) {
+                words.forEach(word => {
+                    wordBoard.append(`<div class="tile"><div class="tile-content">${word}</div></div>`);
+                });
+
+                // Create colored tiles
+                for (let i = 0; i < 16; i++) {
+                    const colorClass = colors[Math.floor(i / 4)];
+                    colorBoard.append(`<div class="colored-tile ${colorClass}"></div>`);
+                }
+
+                // Make tiles draggable
+                makeTilesDraggable();
+
+                // Make colored tiles droppable
+                $('.colored-tile').droppable({
+                    accept: '.tile, .colored-tile',
+                    drop: function(event, ui) {
+                        const droppedItem = ui.draggable;
+                        const targetTile = $(this);
+
+                        if (droppedItem.hasClass('tile')) {
+                            // Get the content from the dragged tile
+                            const content = droppedItem.find('.tile-content').html();
+
+                            // If the colored tile already has content, swap it
+                            if (targetTile.html()) {
+                                const existingContent = targetTile.html();
+                                targetTile.html(`<div class="tile-content">${existingContent}</div>`);
+                            }
+                            targetTile.html(`<div class="tile-content">${content}</div>`);
+                            droppedItem.remove(); // Remove from the word board
+                        } else {
+                            // If it's a colored tile being dragged
+                            const content = droppedItem.find('.tile-content').html();
+                            const existingContent = targetTile.html();
+
+                            // Swap the content
+                            targetTile.html(`<div class="tile-content">${content}</div>`);
+                            droppedItem.html(`<div class="tile-content">${existingContent}</div>`);
+                        }
+
+                        // Reapply draggable functionality to the updated tile
+                        makeTilesDraggable();
+                    }
+                });
+
+                // Make word board droppable to accept tiles back
+                wordBoard.droppable({
+                    accept: '.colored-tile',
+                    drop: function(event, ui) {
+                        const droppedItem = $(ui.draggable);
+                        const content = droppedItem.find('.tile-content').html();
+
+                        // Clear the colored tile that the word was dragged from
+                        droppedItem.html('');
+
+                        // Add the word back to the word board
+                        wordBoard.append(`<div class="tile"><div class="tile-content">${content}</div></div>`);
+
+                        // Make the new tile draggable again
+                        makeTilesDraggable();
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
