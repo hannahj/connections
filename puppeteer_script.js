@@ -2,7 +2,10 @@ const puppeteer = require('puppeteer');
 const fs = require('fs');
 
 (async () => {
-    const browser = await puppeteer.launch({ headless: false });
+    const browser = await puppeteer.launch({
+        headless: true, // Ensure the browser is launched in headless mode
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'] // Add these arguments
+    });
     const page = await browser.newPage();
 
     // Go to the wordfinder page
