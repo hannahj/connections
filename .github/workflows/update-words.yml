@@ -2,7 +2,7 @@ name: Update Words JSON
 
 on:
   schedule:
-    - cron: '0 6 * * *'  # Run daily at 7:00 AM UTC (adjust this for your timezone)
+    - cron: '48 12 * * *'  # Run daily 
 
 jobs:
   update-words:
