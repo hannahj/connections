@@ -1,0 +1,37 @@
+name: Update Words JSON
+
+on:
+  schedule:
+    - cron: '0 6 * * *'  # Run daily at 7:00 AM UTC (adjust this for your timezone)
+
+jobs:
+  update-words:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '16'
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Run Puppeteer script to update words
+      run: node puppeteer_script.js
+
+    - name: Set up Git for commits
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+
+    - name: Commit and push changes
+      run: |
+        git add words.json
+        git commit -m "Update words.json file"
+        git push
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Secure and auto-generated
