@@ -2,7 +2,7 @@ name: Update Words JSON
 
 on:
   schedule:
-    - cron: '48 12 * * *'  # Run daily 
+    - cron: '55 12 * * *'  # Run daily 
   workflow_dispatch:  # enable manual triggering
 
 jobs:
