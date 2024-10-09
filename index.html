@@ -88,13 +88,18 @@
                     cursor: 'move',
                     helper: 'clone',
                     start: function(event, ui) {
+                        const content = $(this).find('.tile-content').html(); // Get the content of the tile
+                        if (!content || content.trim() === '') {
+                            // If the tile has no content, cancel the drag action
+                            return false;
+                        }
                         $(this).css('opacity', 0.5);  // Make dragged tile semi-transparent
                     },
                     stop: function(event, ui) {
                         $(this).css('opacity', 1);    // Restore opacity
                     }
                 });
-            }
+}
 
             // Fetch words from the JSON file
             $.getJSON('words.json', function(words) {
@@ -117,32 +122,38 @@
                     drop: function(event, ui) {
                         const droppedItem = ui.draggable;
                         const targetTile = $(this);
+                        const draggedContent = droppedItem.find('.tile-content').html(); // Get content of dragged tile
 
-                        if (droppedItem.hasClass('tile')) {
-                            // Get the content from the dragged tile
-                            const content = droppedItem.find('.tile-content').html();
-
-                            // If the colored tile already has content, swap it
-                            if (targetTile.html()) {
-                                const existingContent = targetTile.html();
-                                targetTile.html(`<div class="tile-content">${existingContent}</div>`);
-                            }
-                            targetTile.html(`<div class="tile-content">${content}</div>`);
-                            droppedItem.remove(); // Remove from the word board
-                        } else {
-                            // If it's a colored tile being dragged
-                            const content = droppedItem.find('.tile-content').html();
-                            const existingContent = targetTile.html();
-
-                            // Swap the content
-                            targetTile.html(`<div class="tile-content">${content}</div>`);
-                            droppedItem.html(`<div class="tile-content">${existingContent}</div>`);
+                        // Check if the dragged tile has valid content
+                        if (!draggedContent || draggedContent.trim() === '') {
+                            return; // Do nothing if the tile is empty
                         }
 
-                        // Reapply draggable functionality to the updated tile
+                        // Check if the target tile already has content
+                        let existingContent = targetTile.find('.tile-content').html();
+
+                        // Handle word tile being dropped on colored tile
+                        if (droppedItem.hasClass('tile')) { 
+                            // If a word tile is being dropped on a colored tile
+                            if (existingContent && existingContent.trim() !== '') {
+                                // If the target tile already has content, move it back to the word board
+                                wordBoard.append(`<div class="tile"><div class="tile-content">${existingContent}</div></div>`);
+                            }
+                            // Place the dragged word tile content into the target colored tile
+                            targetTile.html(`<div class="tile-content">${draggedContent}</div>`);
+                            droppedItem.remove(); // Remove the word tile from its original position
+                        } else if (droppedItem.hasClass('colored-tile')) {
+                            // If a colored tile is being dropped on another colored tile
+                            // Swap the content between the two colored tiles
+                            targetTile.html(`<div class="tile-content">${draggedContent || ''}</div>`); // Handle undefined
+                            droppedItem.html(`<div class="tile-content">${existingContent || ''}</div>`); // Handle undefined
+                        }
+
+                        // Reapply draggable functionality to the new tiles in the word board
                         makeTilesDraggable();
                     }
                 });
+
 
                 // Make word board droppable to accept tiles back
                 wordBoard.droppable({
